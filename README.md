@@ -51,13 +51,13 @@ The meaning of the AMRVAC parameter lists and variables in the parameter file ca
 |----------|-------------------------------------------------------------------|
 | mstar_sol    | stellar mass (solar units)                                    |
 | rstar_sol    | stellar radius (solar units)                                  |
-| twind_cgs    | wind temperature (Kelvin)                                     |                                                      
+| twind_cgs    | wind temperature (Kelvin)                                     |
 | vturb_cgs    | (constant) turbulent speed (cm/s) throughout wind             |
 | kappa_ross_cgs | Rosseland mean opacity (cm^2/g)                             |
 
 ## Notice
 
-Tested with AMRVAC version 3.1.
+Tested with AMRVAC version 3.2 and 3.1.
 
 ## Known issues
 
