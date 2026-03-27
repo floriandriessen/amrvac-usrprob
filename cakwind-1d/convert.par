@@ -1,0 +1,44 @@
+!==============================================================================
+! Project : 1-D isothermal CAK wind
+!
+! Aim     : convert binary output to ascii output
+!==============================================================================
+
+&filelist
+  base_filename = 'test/cak'
+  convert_type  = 'oneblock'
+  level_io      = 1
+  saveprim      = .true.
+/
+
+&boundlist
+  typeboundary_min1 = 2*'special'
+  typeboundary_max1 = 2*'special'
+/
+
+&meshlist
+  domain_nx1         = 2000
+  block_nx1          = 500
+  xprobmin1          = 1.0
+  xprobmax1          = 10.0
+  stretch_dim(1)     = 'uni'
+  qstretch_baselevel = 1.002
+/
+
+&hd_list
+  hd_gravity = .true.
+  hd_energy  = .false.
+  hd_gamma   = 1.0
+/
+
+&star_list
+  mstar_sol   = 50.0
+  rstar_sol   = 20.0
+  twind_cgs   = 4.0e4
+  rhosurf_cgs = 1.2e-11
+  cak_alpha   = 0.65
+  gayley_qbar = 2000.0
+  gayley_q0   = 0.00395
+  beta        = 0.8
+  ifrc        = 1
+/
