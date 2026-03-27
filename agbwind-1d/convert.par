@@ -1,0 +1,57 @@
+!==============================================================================
+! Project : 1-D pulsating AGB wind
+!
+! Aim     : convert binary output to ascii output
+!==============================================================================
+
+&filelist
+  base_filename = 'out/agb'
+  convert_type  = 'oneblock'
+  level_io      = 1
+  saveprim      = .true.
+  nwauxio       = 1
+/
+
+&methodlist
+  time_stepper     = 'threestep'
+  time_integrator  = 'ssprk3'
+  flux_scheme      = 'tvdlf'
+  limiter          = 'minmod'
+  source_split_usr = .true.
+  typesourcesplit  = 'sf'
+  check_small_values  = .false.
+  fix_small_values    = .true.
+  small_pressure      = 1.0
+  small_density       = 1.0
+  small_values_method = 'replace'
+/
+
+&boundlist
+  typeboundary_min1 = 3*'special'
+  typeboundary_max1 = 3*'noinflow'
+/ 
+
+&meshlist
+  domain_nx1 = 2000
+  block_nx1  = 200
+  xprobmin1  = 1.0
+  xprobmax1  = 20.0
+/
+
+&hd_list
+  hd_gravity = .true.
+  hd_energy  = .true.
+  hd_gamma   = 1.66667
+/
+ 
+&usr_list
+  mstar_sol       = 1.2
+  v_amp_cgs       = 3.0e5
+  puls_period_day = 350.0
+  teff_cgs        = 3000.0
+  beta            = 0.5
+  rhostar_cgs     = 6.7e-9
+  temp_cond1_cgs  = 1.5e3
+  grad_to_ggrav_bowen = 0.95
+  use_lya_cooling     = .true.
+/

@@ -1,0 +1,81 @@
+!==============================================================================
+! Project : 1-D pulsating AGB wind
+!
+! Aim     : Study pulsation-driven dusty wind coming from Mira-type star with
+!           parameters from Bowen (1988, ApJ 329)
+!
+! Config  : setup.pl -d=1 -v=1
+!==============================================================================
+
+&filelist
+  base_filename = 'out/agb'
+/
+
+&savelist
+  itsave(1,1) = 0
+  dtsave_log  = 0.5
+  itsave(1,2) = 0
+  dtsave_dat  = 0.25
+/
+
+&stoplist
+  dtmin = 1.0e-10
+  time_max = 30.0
+/
+
+&methodlist
+  time_stepper     = 'threestep'
+  time_integrator  = 'ssprk3'
+  flux_scheme      = 'tvdlf'
+  limiter          = 'minmod'
+  source_split_usr = .true.
+  typesourcesplit  = 'sf'
+  check_small_values  = .false.
+  fix_small_values    = .true.
+  small_pressure      = 1.0
+  small_density       = 1.0
+  small_values_method = 'replace'
+/
+
+&paramlist
+  courantpar = 0.3
+  slowsteps  = 100
+/
+
+&boundlist
+  typeboundary_min1 = 3*'special'
+  typeboundary_max1 = 3*'noinflow'
+/ 
+
+&meshlist
+  domain_nx1 = 2000
+  block_nx1  = 200
+  xprobmin1  = 1.0
+  xprobmax1  = 20.0
+/
+
+&hd_list
+  hd_gravity = .true.
+  hd_energy  = .true.
+  hd_gamma   = 1.66667
+  hd_radiative_cooling = .false.
+/
+ 
+&rc_list
+  coolcurve  = 'SPEX'
+  coolmethod = 'exact'
+  ncool      = 4000
+  Tfix       = .true.
+/
+
+&usr_list
+  mstar_sol       = 1.2
+  v_amp_cgs       = 3.0e5
+  puls_period_day = 350.0
+  teff_cgs        = 3000.0
+  rhostar_cgs     = 6.7e-9
+  beta            = 0.5
+  tcond1_cgs      = 1.5e3
+  grad_to_ggrav   = 0.95
+  use_lya_cooling = .true.
+/
