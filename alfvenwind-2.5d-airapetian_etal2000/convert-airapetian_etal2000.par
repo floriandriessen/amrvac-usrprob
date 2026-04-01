@@ -1,0 +1,52 @@
+!==============================================================================
+! Project : 2.5D isothermal Alfven wave-driven wind
+!
+! Aim     : convert binary output to vtu output
+!==============================================================================
+
+&filelist
+  base_filename = 'out/alfvenwind'
+  saveprim      = .true.
+  convert_type  = 'vtuBCCmpi'
+  nwauxio       = 3
+/
+
+&boundlist
+  ! rho, mom1, mom2, mom3, b1, b2, b3
+  typeboundary_min1 = 7*'special'
+  typeboundary_max1 = 7*'cont'
+  typeboundary_min2 = 7*'cont'!'symm','symm','asymm','asymm','symm','asymm','asymm'
+  typeboundary_max2 = 'symm','symm','asymm','symm','symm','asymm','symm'
+/
+
+&meshlist
+  domain_nx1 = 1024
+  domain_nx2 = 128
+  block_nx1  = 256
+  block_nx2  = 32
+  xprobmin1  = 1.0
+  xprobmax1  = 20.0
+  xprobmin2  = 0.1875 ! 90-22.5deg
+  xprobmax2  = 0.25   ! 90deg
+/
+
+&paramlist
+  courantpar = 0.4
+/
+
+&mhd_list
+  mhd_gravity = .true.
+  mhd_energy  = .false.
+  mhd_gamma   = 1.0
+  mhd_eta     = 1.0e-4
+  He_abundance = 0.24
+/
+
+&star_list
+  mstar_sol = 10.0
+  rstar_sol = 930.0
+  twind_cgs = 9000.0
+  b0_cgs    = 100.0
+  rho0_cgs  = 9.3e-12
+  vdrive_cgs = 1.0e5
+/
