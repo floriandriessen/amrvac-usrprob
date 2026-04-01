@@ -1,5 +1,5 @@
 !==============================================================================
-! Project : 1-D isothermal CAK wind
+! Project : 1D isothermal CAK wind
 !
 ! Aim     : (mainly) serves to make a relaxed symmetric wind for input in
 !           multi-dimensional CAK wind models. New addition is the study of

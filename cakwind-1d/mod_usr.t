@@ -1,5 +1,5 @@
 !==============================================================================
-! 1-D CAK wind module for launching a spherically symmetric line-driven wind
+! 1D CAK wind module for launching a spherically symmetric line-driven wind
 ! from the stellar surface.
 !
 ! Coded up by Flo for his KU Leuven PhD thesis 2018/2022.

@@ -1,7 +1,9 @@
 
-# 1-D dusty AGB pulsation-driven wind
+# 1D dusty AGB pulsation-driven wind
 
 A simple model to study the dusty pulsation-driven winds of AGB stars as first pioneered by [Bowen (1988)](https://ui.adsabs.harvard.edu/abs/1988ApJ...329..299B/abstract). The dust implementation follows Bowen's phenomenological model and is further simplified by assuming a power-law radiative equilibrium temperature structure. This is contrary to Bowen where the radiative equilibirum temperature is computed from the local spherically-modified optical depth. The difference appears, however, of minor importance in model results.
+
+It was developed for the purpose of learning more about winds from luminous, cool stars while working at the Institute of Astronomy of KU Leuven (2025).
 
 ## Setup
 

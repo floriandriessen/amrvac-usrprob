@@ -1,5 +1,5 @@
 !==============================================================================
-! 1-D model for simulating a pulsation-driven wind from a Mira-like star.
+! 1D model for simulating a pulsation-driven wind from a Mira-like star.
 ! Setup mainly following the work of Bowen (1988), ApJ 329.
 ! 
 ! Pulsation only happens temporally not spatially. Additionally, the velocity
