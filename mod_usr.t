@@ -11,20 +11,21 @@
 module mod_usr
 
   use mod_mhd
-  use mod_cak_force, only: set_cak_force_norm, cak_alpha, gayley_qbar
-  use mod_constants, only: const_c, const_G, const_LSun, const_MSun, &
+  use mod_cak_force,      only: set_cak_force_norm, cak_alpha, gayley_qbar
+  use mod_constants,      only: const_c, const_G, const_LSun, const_MSun, &
        const_RSun, const_kappae, const_sigma, mp_cgs, kB_cgs, const_years
+  use mod_kind_parameter, only: dp
 
   implicit none
 
   ! User input parameters
-  real(8) :: mstar_sol, rstar_sol, twind_cgs, rhosurf_cgs, timestat_cgs, Wrot
-  real(8) :: bpole_cgs=-99.0d0, etastar=-99.0d0
+  real(dp) :: mstar_sol, rstar_sol, twind_cgs, rhosurf_cgs, timestat_cgs, Wrot
+  real(dp) :: bpole_cgs=-99.0_dp, etastar=-99.0_dp
   character(len=99) :: cakfile
 
   ! Dimensionless variables for computations
-  real(8) :: mstar, rstar, bpole, rhosurf, csound, clight, vrot
-  real(8) :: gmstar, timestat, ralf
+  real(dp) :: mstar, rstar, bpole, rhosurf, csound, clight, vrot
+  real(dp) :: gmstar, timestat, ralf
 
   ! Additional names for extra statistical variables in output
   integer :: irhoav_, irho2av_, ivrav_, ivr2av_, irhovrav_
@@ -103,52 +104,52 @@ contains
     use mod_radiative_cooling ! has to be loaded in full to work with rc_fl
 
     ! Local variables
-    real(8) :: unit_ggrav, unit_lum, unit_mass
-    real(8) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
-    real(8) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol
-    real(8) :: vrot_cgs, vrotc_cgs, ralf_sol, rkep_sol, resc_sol
-    real(8) :: lstar, mdot, twind, gammae, vesc, vinf, pthsurf
+    real(dp) :: unit_ggrav, unit_lum, unit_mass
+    real(dp) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
+    real(dp) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol
+    real(dp) :: vrot_cgs, vrotc_cgs, ralf_sol, rkep_sol, resc_sol
+    real(dp) :: lstar, mdot, twind, gammae, vesc, vinf, pthsurf
 
-    real(8), parameter :: floor_density_cgs = 1.0d-20
+    real(dp), parameter :: floor_density_cgs = 1.0e-20_dp
     !--------------------------------------------------------------------------
 
     mstar_cgs = mstar_sol * const_MSun
     rstar_cgs = rstar_sol * const_RSun
 
     ! Stellar structure
-    lstar_cgs  = 4.0d0*dpi * rstar_cgs**2.0d0 * const_sigma * twind_cgs**4.0d0
+    lstar_cgs  = 4.0_dp*dpi*rstar_cgs**2.0_dp * const_sigma * twind_cgs**4.0_dp
     gammae     = const_kappae * lstar_cgs &
-         / (4.0d0*dpi * const_G * mstar_cgs * const_c)
-    logg_cgs   = log10(const_G * mstar_cgs / rstar_cgs**2.0d0)
-    logge_cgs  = logg_cgs + log10(1.0d0 - gammae)
-    mumol      = (1.0d0 + 4.0d0*He_abundance) / (2.0d0 + 3.0d0*He_abundance)
+         / (4.0_dp*dpi * const_G * mstar_cgs * const_c)
+    logg_cgs   = log10(const_G * mstar_cgs / rstar_cgs**2.0_dp)
+    logge_cgs  = logg_cgs + log10(1.0_dp - gammae)
+    mumol      = (1.0_dp + 4.0_dp*He_abundance) / (2.0_dp + 3.0_dp*He_abundance)
     csound_cgs = sqrt(twind_cgs * kB_cgs / (mumol * mp_cgs))
-    heff_cgs   = csound_cgs**2.0d0 / 10.0d0**logge_cgs
-    vrotc_cgs  = sqrt(const_G * mstar_cgs * (1.0d0 - gammae) / rstar_cgs)
+    heff_cgs   = csound_cgs**2.0_dp / 10.0_dp**logge_cgs
+    vrotc_cgs  = sqrt(const_G * mstar_cgs * (1.0_dp - gammae) / rstar_cgs)
     vrot_cgs   = vrotc_cgs * Wrot
 
     ! Wind quantities in CAK theory
-    vesc_cgs  = sqrt( 2.0d0 * const_G * mstar_cgs * (1.0d0 - gammae) &
+    vesc_cgs  = sqrt( 2.0_dp * const_G * mstar_cgs * (1.0_dp - gammae) &
          / rstar_cgs )
-    vinf_cgs  = vesc_cgs * sqrt(cak_alpha / (1.0d0 - cak_alpha))
-    mdot_cgs  = lstar_cgs / const_c**2.0d0 * cak_alpha / (1.0d0 - cak_alpha) &
-         * (gayley_qbar * gammae / (1.0d0 - gammae))**( (1.0d0 - cak_alpha) &
+    vinf_cgs  = vesc_cgs * sqrt(cak_alpha / (1.0_dp - cak_alpha))
+    mdot_cgs  = lstar_cgs / const_c**2.0_dp * cak_alpha / (1.0_dp - cak_alpha)&
+         * (gayley_qbar * gammae / (1.0_dp - gammae))**( (1.0_dp - cak_alpha) &
          / cak_alpha )
 
     ! Bpole given and etastar computed or vice versa
-    if (bpole_cgs > 0.0d0 .and. etastar < 0.0d0) then
-      etastar = ((bpole_cgs/2.0d0)**2.0d0 * rstar_cgs**2.0d0) &
+    if (bpole_cgs > 0.0_dp .and. etastar < 0.0_dp) then
+      etastar = ((bpole_cgs/2.0_dp)**2.0_dp * rstar_cgs**2.0_dp) &
            / (mdot_cgs * vinf_cgs)
-    elseif (etastar > 0.0d0 .and. bpole_cgs < 0.0d0) then
-      bpole_cgs = 2.0d0 * sqrt(mdot_cgs * vinf_cgs * etastar/rstar_cgs**2.0d0)
+    elseif (etastar > 0.0_dp .and. bpole_cgs < 0.0_dp) then
+      bpole_cgs = 2.0_dp * sqrt(mdot_cgs * vinf_cgs * etastar/rstar_cgs**2.0_dp)
     else
       call mpistop('initglobaldata_usr: set bpole or etastar in .par file.')
     endif
 
     ! Compute Alfven, Kepler, and escape radius
-    ralf_sol = 1.0d0 + (etastar + 0.25d0)**0.25d0 - 0.25d0**0.25d0
-    rkep_sol = Wrot**(-2.0d0/3.0d0)
-    resc_sol = 2.0d0**(1.0d0/3.0d0) * rkep_sol
+    ralf_sol = 1.0_dp + (etastar + 0.25_dp)**0.25_dp - 0.25_dp**0.25_dp
+    rkep_sol = Wrot**(-2.0_dp/3.0_dp)
+    resc_sol = 2.0_dp**(1.0_dp/3.0_dp) * rkep_sol
 
     if (typedivbfix == 'ct') then
       call mpistop('initglobaldata_usr: Constrained Transport method for '// &
@@ -161,12 +162,12 @@ contains
     endif
 
     ! Code units
-    unit_ggrav   = unit_density * unit_time**2.0d0
-    unit_lum     = unit_density * unit_length**5.0d0 / unit_time**3.0d0
-    unit_mass    = unit_density * unit_length**3.0d0
+    unit_ggrav   = unit_density * unit_time**2.0_dp
+    unit_lum     = unit_density * unit_length**5.0_dp / unit_time**3.0_dp
+    unit_mass    = unit_density * unit_length**3.0_dp
 
     lstar    = lstar_cgs / unit_lum
-    mstar    = mstar_cgs / (unit_density * unit_length**3.0d0)
+    mstar    = mstar_cgs / (unit_density * unit_length**3.0_dp)
     rstar    = rstar_cgs / unit_length
     twind    = twind_cgs / unit_temperature
     bpole    = bpole_cgs / unit_magneticfield
@@ -177,7 +178,7 @@ contains
     csound   = csound_cgs / unit_velocity
     clight   = const_c / unit_velocity
     vesc     = vesc_cgs / unit_velocity
-    vinf     = vesc * sqrt(cak_alpha / (1.0d0 - cak_alpha))
+    vinf     = vesc * sqrt(cak_alpha / (1.0_dp - cak_alpha))
     vrot     = vrot_cgs / unit_velocity
     gmstar   = const_G * unit_ggrav * mstar
     timestat = timestat_cgs / unit_time
@@ -186,7 +187,7 @@ contains
     mhd_adiab = pthsurf / rhosurf**mhd_gamma
 
     small_density     = floor_density_cgs / unit_density
-    small_temperature = 0.8d0*twind
+    small_temperature = 0.8_dp*twind
     small_pressure    = small_density * small_temperature
 
     if (mhd_radiative_cooling) rc_fl%tlow = small_temperature
@@ -232,10 +233,10 @@ contains
       print*, 'isothermal asound      = ', csound_cgs
       print*, 'eff. vesc              = ', vesc_cgs
       print*, 'CAK vinf               = ', vinf_cgs
-      print*, 'FD vinf                = ', 3.0d0 * vesc_cgs
+      print*, 'FD vinf                = ', 3.0_dp * vesc_cgs
       print*, 'analytic Mdot CAK      = ', mdot_cgs * const_years / const_MSun
       print*, '... with FD correction = ', &
-           mdot_cgs / (1.0d0 + cak_alpha)**(1.0d0/cak_alpha) &
+           mdot_cgs / (1.0_dp + cak_alpha)**(1.0_dp/cak_alpha) &
            * const_years / const_MSun
       print*
       print*, '========================================'
@@ -268,22 +269,22 @@ contains
 !==============================================================================
   subroutine initial_conditions(ixI^L, ixO^L, w, x)
 
-    use mod_initcak
+    use mod_init_cakwind
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixO^L
-    real(8), intent(in)    :: x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: ixI^L, ixO^L
+    real(dp), intent(in)    :: x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local arguments
-    integer :: ir
-    real(8) :: local_r, interp_rho, interp_vr
-    logical :: first=.true.
+    integer  :: ir
+    real(dp) :: local_r, interp_rho, interp_vr
+    logical  :: first=.true.
     !--------------------------------------------------------------------------
 
     if (first) then
       first = .false.
-      call read_initial_oned_cakwind(cakfile)
+      call read_oned_cakwind(cakfile)
     endif
 
     do ir = ixOmin1,ixOmax1
@@ -294,33 +295,33 @@ contains
       w(ir^%1ixO^S,mom(1)) = interp_vr
     enddo
 
-    w(ixO^S,mom(2)) = 0.0d0
+    w(ixO^S,mom(2)) = 0.0_dp
 
     if (mhd_rotating_frame) then
-      w(ixO^S,mom(3)) = 0.0d0
+      w(ixO^S,mom(3)) = 0.0_dp
     else
       ! Angular momentum conserving
-      w(ixO^S,mom(3)) = vrot * sin(x(ixO^S,2)) * rstar**2.0d0 / x(ixO^S,1)
+      w(ixO^S,mom(3)) = vrot * sin(x(ixO^S,2)) * rstar**2.0_dp / x(ixO^S,1)
     endif
 
     ! Setup dipole magnetic field based on Tanaka splitting or regular
     if (B0field) then
-      w(ixO^S,mag(:)) = 0.0d0
+      w(ixO^S,mag(:)) = 0.0_dp
     else
-      w(ixO^S,mag(1)) = bpole * cos(x(ixO^S,2)) * (rstar / x(ixO^S,1))**3.0d0
-      w(ixO^S,mag(2)) = 0.5d0 * bpole * sin(x(ixO^S,2)) &
-           * (rstar / x(ixO^S,1))**3.0d0
-      w(ixO^S,mag(3)) = 0.0d0
+      w(ixO^S,mag(1)) = bpole * cos(x(ixO^S,2)) * (rstar / x(ixO^S,1))**3.0_dp
+      w(ixO^S,mag(2)) = 0.5_dp * bpole * sin(x(ixO^S,2)) &
+           * (rstar / x(ixO^S,1))**3.0_dp
+      w(ixO^S,mag(3)) = 0.0_dp
     endif
 
     ! Initial pressure is isothermal
     if (mhd_energy) w(ixO^S,p_) = w(ixO^S,rho_)
 
-    if (mhd_glm) w(ixO^S,psi_) = 0.0d0
+    if (mhd_glm) w(ixO^S,psi_) = 0.0_dp
 
     call mhd_to_conserved(ixI^L,ixO^L,w,x)
 
-    w(ixO^S,nw-nwextra+1:nw) = 0.0d0
+    w(ixO^S,nw-nwextra+1:nw) = 0.0_dp
 
   end subroutine initial_conditions
 
@@ -331,9 +332,9 @@ contains
   subroutine special_bound(qt, ixI^L, ixB^L, iB, w, x)
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixB^L, iB
-    real(8), intent(in)    :: qt, x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: ixI^L, ixB^L, iB
+    real(dp), intent(in)    :: qt, x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variable
     integer :: ir, ixE^L
@@ -352,8 +353,8 @@ contains
       ! vr (2nd order accurate constant slope extrapolation in 1st ghost cell)
       do ir = ixBmax1,ixBmin1,-1
         if (ir == ixBmax1) then
-          w(ir^%1ixB^S,mom(1)) = 1.0d0/3.0d0 &
-               * (-w(ir+2^%1ixB^S,mom(1)) + 4.0d0*w(ir+1^%1ixB^S,mom(1)))
+          w(ir^%1ixB^S,mom(1)) = 1.0_dp/3.0_dp &
+               * (-w(ir+2^%1ixB^S,mom(1)) + 4.0_dp*w(ir+1^%1ixB^S,mom(1)))
         else
           w(ir^%1ixB^S,mom(1)) = w(ir+1^%1ixB^S,mom(1))
         endif
@@ -364,7 +365,7 @@ contains
       w(ixB^S,mom(1)) = max(w(ixB^S,mom(1)), -csound)
 
       if (mhd_rotating_frame) then
-        w(ixB^S,mom(3)) = 0.0d0
+        w(ixB^S,mom(3)) = 0.0_dp
       else
         ! Rigid body rotation of star
         w(ixB^S,mom(3)) = vrot * sin(x(ixB^S,2))
@@ -375,59 +376,59 @@ contains
           ! r*r*(B0r + delta Br) = constant
           w(ir^%1ixB^S,mag(1)) = ( bpole * cos(x(ixBmax1+1^%1ixB^S,2))     &
                +                   w(ixBmax1+1^%1ixB^S,mag(1)) )           &
-               * (rstar/x(ir^%1ixB^S,1))**2.0d0 - block%B0(ir^%1ixB^S,1,0)
+               * (rstar/x(ir^%1ixB^S,1))**2.0_dp - block%B0(ir^%1ixB^S,1,0)
 
           ! delta Btheta
-          w(ir^%1ixB^S,mag(2)) = 1.0d0/3.0d0 &
-               * (-w(ir+2^%1ixB^S,mag(2)) + 4.0d0*w(ir+1^%1ixB^S,mag(2)))
+          w(ir^%1ixB^S,mag(2)) = 1.0_dp/3.0_dp &
+               * (-w(ir+2^%1ixB^S,mag(2)) + 4.0_dp*w(ir+1^%1ixB^S,mag(2)))
 
           ! delta Bphi
-          w(ir^%1ixB^S,mag(3)) = 1.0d0/3.0d0 &
-               * (-w(ir+2^%1ixB^S,mag(3)) + 4.0d0*w(ir+1^%1ixB^S,mag(3)))
+          w(ir^%1ixB^S,mag(3)) = 1.0_dp/3.0_dp &
+               * (-w(ir+2^%1ixB^S,mag(3)) + 4.0_dp*w(ir+1^%1ixB^S,mag(3)))
         enddo
 
       else ! Standard dipole magnetic field
         do ir = ixBmax1,ixBmin1,-1
           ! r*r*Br = constant
           w(ir^%1ixB^S,mag(1)) = bpole * cos(x(ixBmax1+1^%1ixB^S,2)) &
-               * (rstar/x(ir^%1ixB^S,1))**2.0d0
+               * (rstar/x(ir^%1ixB^S,1))**2.0_dp
 
           ! Btheta
-          w(ir^%1ixB^S,mag(2)) = 1.0d0/3.0d0 &
-               * (-w(ir+2^%1ixB^S,mag(2)) + 4.0d0*w(ir+1^%1ixB^S,mag(2)))
+          w(ir^%1ixB^S,mag(2)) = 1.0_dp/3.0_dp &
+               * (-w(ir+2^%1ixB^S,mag(2)) + 4.0_dp*w(ir+1^%1ixB^S,mag(2)))
 
           ! Bphi
-          w(ir^%1ixB^S,mag(3)) = 1.0d0/3.0d0 &
-               * (-w(ir+2^%1ixB^S,mag(3)) + 4.0d0*w(ir+1^%1ixB^S,mag(3)))
+          w(ir^%1ixB^S,mag(3)) = 1.0_dp/3.0_dp &
+               * (-w(ir+2^%1ixB^S,mag(3)) + 4.0_dp*w(ir+1^%1ixB^S,mag(3)))
         enddo
       endif
 
       ! Enforce poloidal flow along magnetic field; outside magnetosphere from
       ! induction equation, inside magnetosphere put at zero
       ! Flo: need in strong confinement models to avoid fountain flows at pole
-      if (etastar > 1.0d0) then
+      if (etastar > 1.0_dp) then
         if (B0field) then
-          where ( abs(0.5d0*dpi - x(ixB^S,2)) >= asin(sqrt(rstar/ralf)) )
+          where ( abs(0.5_dp*dpi - x(ixB^S,2)) >= asin(sqrt(rstar/ralf)) )
             w(ixB^S,mom(2)) = w(ixB^S,mom(1)) &
                  * (block%B0(ixB^S,2,0) + w(ixB^S,mag(2))) &
                  / (block%B0(ixB^S,1,0) + w(ixB^S,mag(1)))
           elsewhere
-            w(ixB^S,mom(2)) = 0.0d0
+            w(ixB^S,mom(2)) = 0.0_dp
           endwhere
         else
-          where ( abs(0.5d0*dpi - x(ixB^S,2)) >= asin(sqrt(rstar/ralf)) )
+          where ( abs(0.5_dp*dpi - x(ixB^S,2)) >= asin(sqrt(rstar/ralf)) )
             w(ixB^S,mom(2)) = w(ixB^S,mom(1)) * w(ixB^S,mag(2))/w(ixB^S,mag(1))
           elsewhere
-            w(ixB^S,mom(2)) = 0.0d0
+            w(ixB^S,mom(2)) = 0.0_dp
           endwhere
         endif
       else
-        w(ixB^S,mom(2)) = 0.0d0
+        w(ixB^S,mom(2)) = 0.0_dp
       endif
 
       if (mhd_energy) w(ixB^S,p_) = mhd_adiab * w(ixB^S,rho_)**mhd_gamma
 
-      if (mhd_glm) w(ixB^S,psi_) = 0.0d0
+      if (mhd_glm) w(ixB^S,psi_) = 0.0_dp
 
       call mhd_to_conserved(ixI^L,ixE^L,w,x)
 
@@ -443,15 +444,15 @@ contains
   subroutine stellar_gravity(ixI^L, ixO^L, wCT, x, gravity_field)
 
     ! Subroutine arguments
-    integer, intent(in)  :: ixI^L, ixO^L
-    real(8), intent(in)  :: x(ixI^S,1:ndim), wCT(ixI^S,1:nw)
-    real(8), intent(out) :: gravity_field(ixI^S,ndim)
+    integer,  intent(in)  :: ixI^L, ixO^L
+    real(dp), intent(in)  :: x(ixI^S,1:ndim), wCT(ixI^S,1:nw)
+    real(dp), intent(out) :: gravity_field(ixI^S,ndim)
     !--------------------------------------------------------------------------
 
-    gravity_field(ixI^S,:) = 0.0d0
+    gravity_field(ixI^S,:) = 0.0_dp
 
     ! Only in radial direction
-    gravity_field(ixO^S,1) = -gmstar / x(ixO^S,1)**2.0d0
+    gravity_field(ixO^S,1) = -gmstar / x(ixO^S,1)**2.0_dp
 
   end subroutine stellar_gravity
 
@@ -464,12 +465,12 @@ contains
   subroutine compute_stats(igrid, level, ixI^L, ixO^L, qt, w, x)
 
     ! Subroutine arguments
-    integer, intent(in)    :: igrid, level, ixI^L, ixO^L
-    real(8), intent(in)    :: qt, x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: igrid, level, ixI^L, ixO^L
+    real(dp), intent(in)    :: qt, x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variables
-    real(8) :: tnormp, tnormc
+    real(dp) :: tnormp, tnormc
     !--------------------------------------------------------------------------
 
     if (qt < timestat) return
@@ -487,7 +488,7 @@ contains
 
     ! Average mass density squared
     w(ixO^S,irho2av_) = w(ixO^S,irho2av_)*tnormp
-    w(ixO^S,irho2av_) = w(ixO^S,irho2av_) + dt * w(ixO^S,rho_)**2.0d0
+    w(ixO^S,irho2av_) = w(ixO^S,irho2av_) + dt * w(ixO^S,rho_)**2.0_dp
     w(ixO^S,irho2av_) = w(ixO^S,irho2av_)/tnormc
 
     ! Average radial velocity
@@ -497,7 +498,7 @@ contains
 
     ! Average radial velocity squared
     w(ixO^S,ivr2av_) = w(ixO^S,ivr2av_)*tnormp
-    w(ixO^S,ivr2av_) = w(ixO^S,ivr2av_) + dt * w(ixO^S,mom(1))**2.0d0
+    w(ixO^S,ivr2av_) = w(ixO^S,ivr2av_) + dt * w(ixO^S,mom(1))**2.0_dp
     w(ixO^S,ivr2av_) = w(ixO^S,ivr2av_)/tnormc
 
     ! Average radial momentum density (correlation mass density-velocity)
@@ -513,7 +514,7 @@ contains
 
     ! Average polar velocity squared
     w(ixO^S,ivpol2av_) = w(ixO^S,ivpol2av_)*tnormp
-    w(ixO^S,ivpol2av_) = w(ixO^S,ivpol2av_) + dt * w(ixO^S,mom(2))**2.0d0
+    w(ixO^S,ivpol2av_) = w(ixO^S,ivpol2av_) + dt * w(ixO^S,mom(2))**2.0_dp
     w(ixO^S,ivpol2av_) = w(ixO^S,ivpol2av_)/tnormc
 
     ! Average wind temperature
@@ -533,13 +534,13 @@ contains
   subroutine set_extravar_output(ixI^L, ixO^L, w, x, normconv)
 
     ! Subroutine arguments
-    integer, intent(in) :: ixI^L, ixO^L
-    real(8), intent(in) :: x(ixI^S,1:ndim)
-    real(8)             :: w(ixI^S,nw+nwauxio)
-    real(8)             :: normconv(0:nw+nwauxio)
+    integer,  intent(in) :: ixI^L, ixO^L
+    real(dp), intent(in) :: x(ixI^S,1:ndim)
+    real(dp)             :: w(ixI^S,nw+nwauxio)
+    real(dp)             :: normconv(0:nw+nwauxio)
 
     ! Local variable
-    real(8) :: divbboy(ixI^S)
+    real(dp) :: divbboy(ixI^S)
     !--------------------------------------------------------------------------
 
     ! Output the Alfven speed by summing squared Bfield in each direction
@@ -574,15 +575,15 @@ contains
   subroutine make_dipoleboy(ixI^L, ixO^L, x, wB0)
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixO^L
-    real(8), intent(in)    :: x(ixI^S,1:ndim)
-    real(8), intent(inout) :: wB0(ixI^S,1:ndir)
+    integer,  intent(in)    :: ixI^L, ixO^L
+    real(dp), intent(in)    :: x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: wB0(ixI^S,1:ndir)
     !--------------------------------------------------------------------------
 
     ! Polar magnetic field strength set by bpole variable
-    wB0(ixI^S,1) = bpole * (rstar/x(ixI^S,1))**3.0d0 * cos(x(ixI^S,2))
-    wB0(ixI^S,2) = 0.5d0*bpole * (rstar/x(ixI^S,1))**3.0d0 * sin(x(ixI^S,2))
-    wB0(ixI^S,3) = 0.0d0
+    wB0(ixI^S,1) = bpole * (rstar/x(ixI^S,1))**3.0_dp * cos(x(ixI^S,2))
+    wB0(ixI^S,2) = 0.5_dp*bpole * (rstar/x(ixI^S,1))**3.0_dp * sin(x(ixI^S,2))
+    wB0(ixI^S,3) = 0.0_dp
 
   end subroutine make_dipoleboy
 
