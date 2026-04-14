@@ -328,15 +328,18 @@ contains
     real(8), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variable
-    integer :: ir
+    integer :: ir, ixE^L
     !--------------------------------------------------------------------------
 
     select case (iB)
     case(1)
 
-      call mhd_to_primitive(ixI^L,ixI^L,w,x)
+      ixE^L=ixB^L;
+      ixEmax1=ixBmax1+2
 
       w(ixB^S,rho_) = rhosurf
+
+      call mhd_to_primitive(ixI^L,ixE^L,w,x)
 
       ! vr (2nd order accurate constant slope extrapolation in 1st ghost cell)
       do ir = ixBmax1,ixBmin1,-1
@@ -413,7 +416,7 @@ contains
 
       if (mhd_glm) w(ixB^S,psi_) = 0.0d0
 
-      call mhd_to_conserved(ixI^L,ixI^L,w,x)
+      call mhd_to_conserved(ixI^L,ixE^L,w,x)
 
     case default
       call mpistop("special_bound: BC not specified")
