@@ -1,26 +1,26 @@
-!=================================================
+!==============================================================================
 ! Project : 2.5D isothermal, magnetic CAK wind
 !
-! Aim     : start from a 1D relaxed CAK wind to
-!           study wind-magnetosphere interaction
+! Aim     : start from a 1D relaxed CAK wind to study wind-magnetosphere
+!           interaction following ud-Doula & Owocki (2002), ApJ 576
 !
-! Config  : setup.pl -d=2
-!=================================================
+! Config  : setup.pl -d=2 -v=3
+!==============================================================================
 
 &filelist
-  base_filename = 'test/ms'
+  base_filename = 'out/ms'
 /
 
 &savelist
   itsave(1,1) = 0
-  itsave(1,2) = 0
   ditsave_log = 1000
-  dtsave_dat  = 2.5d-2
+  itsave(1,2) = 0
+  dtsave_dat  = 2.5e-2
 /
 
 &stoplist
-  dtmin    = 1.0d-20
-  time_max = 0.5d0
+  dtmin    = 1.0e-10
+  time_max = 0.5
 /
 
 &methodlist
@@ -38,34 +38,34 @@
 /
 
 &meshlist
-  domain_nx1     = 256 
-  domain_nx2     = 128
-  block_nx1      = 16 
-  block_nx2      = 16 
-  xprobmin1      = 1.0d0 
-  xprobmax1      = 10.0d0 
-  xprobmin2      = 0.0d0
-  xprobmax2      = 0.5d0
+  domain_nx1 = 256
+  domain_nx2 = 128
+  block_nx1  = 8
+  block_nx2  = 8
+  xprobmin1  = 1.0
+  xprobmax1  = 10.0
+  xprobmin2  = 0.0
+  xprobmax2  = 0.5
   stretch_dim(1) = 'uni'
   qstretch_baselevel(1) = 1.02
 /
 
 &paramlist
-  courantpar = 0.3d0 
+  courantpar = 0.3
 /
 
 &mhd_list
   mhd_gravity = .true.
   mhd_energy  = .false.
-  mhd_gamma   = 1.0d0
+  mhd_gamma   = 1.0
   typedivbfix = 'powell'
   B0field     = .false.
   mhd_cak_force = .true.
 /
 
 &cak_list
-  cak_alpha    = 0.65d0
-  gayley_qbar  = 2000.0d0
+  cak_alpha    = 0.65
+  gayley_qbar  = 2000.0
   cak_1d_force = .true.
   cak_1d_opt   = 1
   cak_vector_force = .false.
@@ -73,11 +73,11 @@
 
 &star_list
   cakfile      = 'relaxed-CAK-winds/ic-zetapup-30rs.blk'
-  mstar_sol    = 50.0d0
-  rstar_sol    = 20.0d0
-  twind_cgs    = 4.0d4
-  etastar      = 10.0d0
-  rhosurf_cgs  = 2.0d-11
-  timestat_cgs = 2.0d5
-  Wrot         = 0.01d0
+  mstar_sol    = 50.0
+  rstar_sol    = 20.0
+  twind_cgs    = 4e4
+  etastar      = 10.0
+  rhosurf_cgs  = 2e-11
+  timestat_cgs = 2e5
+  Wrot         = 0.01
 /

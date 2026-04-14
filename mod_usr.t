@@ -4,22 +4,22 @@
 ! Setup inspired by the original work of ud-Doula & Owocki (2002), ApJ 576.
 !
 ! This module relies on my developed mod_cak_force module in MPI-AMRVAC and a
-! separate routine to read in 1-D smooth CAK wind initial conditions.
+! separate routine to read in 1D smooth CAK wind initial conditions.
 !
 ! Coded up by Florian Driessen: 2018-2022 (PhD), 2025
 !==============================================================================
 module mod_usr
 
   use mod_mhd
-  use mod_cak_force, ONLY: set_cak_force_norm, cak_alpha, gayley_qbar
-  use mod_constants, ONLY: const_c, const_G, const_LSun, const_MSun, &
+  use mod_cak_force, only: set_cak_force_norm, cak_alpha, gayley_qbar
+  use mod_constants, only: const_c, const_G, const_LSun, const_MSun, &
        const_RSun, const_kappae, const_sigma, mp_cgs, kB_cgs, const_years
 
   implicit none
 
   ! User input parameters
   real(8) :: mstar_sol, rstar_sol, twind_cgs, rhosurf_cgs, timestat_cgs, Wrot
-  real(8) :: bpole_cgs=-99.0, etastar=-99.0
+  real(8) :: bpole_cgs=-99.0d0, etastar=-99.0d0
   character(len=99) :: cakfile
 
   ! Dimensionless variables for computations
@@ -37,7 +37,6 @@ contains
 !==============================================================================
   subroutine usr_init
 
-    call set_coordinate_system("spherical_2.5D")
     call usr_params_read(par_files)
 
     ! Choose normalisation units:
@@ -54,6 +53,7 @@ contains
     usr_add_aux_names    => set_extravarnames_output
     usr_set_B0           => make_dipoleboy
 
+    call set_coordinate_system("spherical_2.5D")
     call mhd_activate()
 
     irhoav_   = var_set_extravar("rho_av", "rho_av")
@@ -65,6 +65,8 @@ contains
     irhovrav_ = var_set_extravar("rho_vrad_av", "rho_vrad_av")
 
     if (mhd_energy) itav_ = var_set_extravar("twind_av", "twind_av")
+
+    call set_cak_force_norm(rstar_sol*const_RSun, twind_cgs)
 
   end subroutine usr_init
 
@@ -96,12 +98,17 @@ contains
 !==============================================================================
   subroutine initglobaldata_usr
 
+    use mod_mhd_phys, only: rc_fl
+    use mod_radiative_cooling ! has to be loaded in full to work with rc_fl
+
     ! Local variables
     real(8) :: unit_ggrav, unit_lum, unit_mass
     real(8) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
     real(8) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol
     real(8) :: vrot_cgs, vrotc_cgs, ralf_sol, rkep_sol, resc_sol
     real(8) :: lstar, mdot, twind, gammae, vesc, vinf, pthsurf
+
+    real(8), parameter :: floor_density_cgs = 1.0d-20
     !--------------------------------------------------------------------------
 
     mstar_cgs = mstar_sol * const_MSun
@@ -127,8 +134,6 @@ contains
          * (gayley_qbar * gammae / (1.0d0 - gammae))**( (1.0d0 - cak_alpha) &
          / cak_alpha )
 
-    call set_cak_force_norm(rstar_sol*const_RSun, twind_cgs)
-
     ! Bpole given and etastar computed or vice versa
     if (bpole_cgs > 0.0d0 .and. etastar < 0.0d0) then
       etastar = ((bpole_cgs/2.0d0)**2.0d0 * rstar_cgs**2.0d0) &
@@ -136,7 +141,7 @@ contains
     elseif (etastar > 0.0d0 .and. bpole_cgs < 0.0d0) then
       bpole_cgs = 2.0d0 * sqrt(mdot_cgs * vinf_cgs * etastar/rstar_cgs**2.0d0)
     else
-      call mpistop('Set stellar Bfield with bpole or etastar in .par file.')
+      call mpistop('initglobaldata_usr: set bpole or etastar in .par file.')
     endif
 
     ! Compute Alfven, Kepler, and escape radius
@@ -145,11 +150,13 @@ contains
     resc_sol = 2.0d0**(1.0d0/3.0d0) * rkep_sol
 
     if (typedivbfix == 'ct') then
-      call mpistop('Constrained Transport for Bfield not yet implemented.')
+      call mpistop('initglobaldata_usr: Constrained Transport method for '// &
+           'magnetic field not yet implemented.')
     endif
 
     if (mhd_energy .and. (.not.mhd_radiative_cooling)) then
-      call mpistop('No support for adiabatic cooling. Add radiative cooling.')
+      call mpistop('initglobaldata_usr: no support for adiabatic cooling. '// &
+           'Add radiative cooling.')
     endif
 
     ! Code units
@@ -174,7 +181,14 @@ contains
     gmstar   = const_G * unit_ggrav * mstar
     timestat = timestat_cgs / unit_time
 
+    ! Modify some (dimensionless) AMRVAC variables from their default value
     mhd_adiab = pthsurf / rhosurf**mhd_gamma
+
+    small_density     = floor_density_cgs / unit_density
+    small_temperature = 0.8d0*twind
+    small_pressure    = small_density * small_temperature
+
+    if (mhd_radiative_cooling) rc_fl%tlow = small_temperature
 
     if (mype == 0 .and. .not.convert) then
       print*, '======================'
@@ -340,10 +354,7 @@ contains
 
       w(ixB^S,mom(3)) = vrot * sin(x(ixB^S,2))
 
-      !******************
-      ! Tanaka splitting
-      !******************
-      if (B0field) then
+      if (B0field) then ! Tanaka field splitting
         do ir = ixBmax1,ixBmin1,-1
           ! r*r*(B0r + delta Br) = constant
           w(ir^%1ixB^S,mag(1)) = ( bpole * cos(x(ixBmax1+1^%1ixB^S,2))     &
@@ -358,10 +369,8 @@ contains
           w(ir^%1ixB^S,mag(3)) = 1.0d0/3.0d0 &
                * (-w(ir+2^%1ixB^S,mag(3)) + 4.0d0*w(ir+1^%1ixB^S,mag(3)))
         enddo
-      !*********
-      ! Regular
-      !*********
-      else
+
+      else ! Standard dipole magnetic field
         do ir = ixBmax1,ixBmin1,-1
           ! r*r*Br = constant
           w(ir^%1ixB^S,mag(1)) = bpole * cos(x(ixBmax1+1^%1ixB^S,2)) &
@@ -407,7 +416,7 @@ contains
       call mhd_to_conserved(ixI^L,ixI^L,w,x)
 
     case default
-      call mpistop("BC not specified")
+      call mpistop("special_bound: BC not specified")
     end select
 
   end subroutine special_bound
@@ -423,7 +432,7 @@ contains
     real(8), intent(out) :: gravity_field(ixI^S,ndim)
     !--------------------------------------------------------------------------
 
-    gravity_field(ixO^S,:) = 0.0d0
+    gravity_field(ixI^S,:) = 0.0d0
 
     ! Only in radial direction
     gravity_field(ixO^S,1) = -gmstar / x(ixO^S,1)**2.0d0
@@ -447,8 +456,7 @@ contains
     real(8) :: tnormp, tnormc
     !--------------------------------------------------------------------------
 
-    ! Note: qt is just a placeholder for the 'global_time' variable
-    if (qt < timestat) RETURN
+    if (qt < timestat) return
 
     call mhd_to_primitive(ixI^L,ixO^L,w,x)
 
@@ -545,8 +553,7 @@ contains
   end subroutine set_extravarnames_output
 
 !==============================================================================
-! Add a steady (time-independent) potential dipole background field with polar
-! magnetic field strength set by dimensionless 'bpole' variable.
+! Add a steady (time-independent) potential dipole background field.
 !==============================================================================
   subroutine make_dipoleboy(ixI^L, ixO^L, x, wB0)
 
@@ -556,6 +563,7 @@ contains
     real(8), intent(inout) :: wB0(ixI^S,1:ndir)
     !--------------------------------------------------------------------------
 
+    ! Polar magnetic field strength set by bpole variable
     wB0(ixI^S,1) = bpole * (rstar/x(ixI^S,1))**3.0d0 * cos(x(ixI^S,2))
     wB0(ixI^S,2) = 0.5d0*bpole * (rstar/x(ixI^S,1))**3.0d0 * sin(x(ixI^S,2))
     wB0(ixI^S,3) = 0.0d0

@@ -16,7 +16,8 @@
 module mod_initcak
 
   ! Make some global variables and AMRVAC stuff available to this module
-  use mod_amrvac
+  use mod_global_parameters
+  use mod_comm_lib
 
   implicit none
 
