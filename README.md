@@ -2,20 +2,21 @@
 
 # 2.5D CAK Wind-Magnetosphere interaction
 
-Make MHD model of the radiation-driven wind of a magnetic OB-star interacting with its magnetosphere using MPI-AMRVAC. The magnetosphere can be dynamical or centrifugal. The stellar wind is modelled with the CAK force parametrisation and the force can be purely radial radiation or include non-radial radiation components. The CAK wind uses the CAK radiation force module of MPI-AMRVAC. Both isothermal and non-isothermal simulations are supported.
-
 *A simplified problem is available in the MPI-AMRVAC magnetohydrodynamic test problem folder.*
+
+Make MHD model of the radiation-driven wind of a magnetic OB-star interacting with its magnetosphere using MPI-AMRVAC. The magnetosphere can be dynamical or centrifugal. The stellar wind is modelled with the CAK force parametrisation and the force can be purely radial radiation or include non-radial radiation components. The CAK wind uses the CAK radiation force module of MPI-AMRVAC. Both isothermal and non-isothermal simulations are supported.
 
 ## Setup
 
 After cloning go into the local directory and fetch AMRVAC makefile (assuming you have exported the `AMRVAC_DIR` variable in the `.bashrc` on linux or `.bash_profile` on macos)
 ```
-$ setup.pl -d=2
+$ setup.pl -d=2 -v=3
 ```
 and do a make (if the AMRVAC source was not compiled yet, this will be done now as well)
 ```
 $ make -j
 ```
+A `local.make` file is included that ensures local extra user modules are visible during compilation. The main makefile calls `local.make` and will use its information for the compilation of `mod_usr.t`--and thus the final executable.
 
 ## How-to
 
@@ -25,22 +26,33 @@ Both Dynamical (DM) and Centrifugal Magnetosphere (CM) simulations can be done. 
 
 Formally a DM can be run in the non-rotating star case---in the published works on DMs the rotation is set to zero. However, adding a little rotation can be quite beneficial if studying a DM with a strong magnetic confinement. Essentially this makes the little mass outflow in the magnetic equatorial plane more stable. There is no rule of thumb for choosing the rotation rate, but several km/s is fine.
 
-To make a CM the star should be rotating fast and have a strong magnetic confinement. This is the easiest way to enforce the CM condition. A rotation rate of half critical rotation is a good setup. Going above `Wrot = 0.75d0` is not recommended as the oblateness of the star should then be properly taken into account, which is currently not implemented.
+To make a CM the star should be rotating fast and have a strong magnetic confinement. This is the easiest way to enforce the CM condition. A rotation rate of half critical rotation is a good setup. Going above `Wrot = 0.5d0` is not recommended as the oblateness of the star should then be properly taken into account, which is not implemented.
 
 ### Performing a simulation
 
-Simulations can be run using included .par files. Specific stellar parameters are set in the `star_list` inside the .par file. The CAK wind parametrisation is handled with the `cak_list`.
+The current .par file has stellar parameters corresponding to a typical O-supergiant (Zeta Puppis) in the Galaxy. For example, a run on 4 cores
+```
+$ mpiexec -np 4 ./amrvac -i usr_isothermal.par
+```
+and once finished to convert a range of output
+```
+aiconvert convert.par N0 N1
+```
+where $N0$, $N1$ are an integer for the desired initial and final snapshot. *If changes occur in the namelist(s) meshlist and/or usr_list, this corresponding change also needs to be made in the convert.par file.*
 
-Several options exist for doing the MHD part. So far no Constrained Transport is implemented due to numerical issues in the magnetosphere. The code runs with other divergence cleaners and **Powell** or **GLM** are recommended. **NOTE**: if you use the GLM cleaner then the additional variable 'psi' will be added in the output.
+Simulations can be run using included .par files for isothermal or radiative cooling options. The CAK wind parametrisation is handled with the `cak_list` namelist.
+
+## Additional physics options
+
+Several options exist for doing the MHD part. So far no Constrained Transport is implemented due to numerical issues in the magnetosphere. The code runs with other divergence cleaners and **Powell** or **GLM** are recommended.
+
+### Magnetic field splitting
 
 It might be beneficial in some user cases to turn on Tanaka's magnetic field splitting (added stability + in adiabatic MHD reduced probability of getting negative pressures). Tanaka's method is particularly recommended for highly magnetic flows (magnetic confinement >> 1) and can be switched on in `mhd_list` via
 ```
 B0field = .true.
 ```
-
 and in the code the `make_dipoleboy` subroutine is called instead to add a global, time-independent background dipole field. 
-
-## Additional physics options
 
 ### Adiabatic MHD with radiative cooling
 
@@ -97,16 +109,16 @@ mpiexec -np <NUM> ./amrvac -i <PARFILE> -if path_to_datfile_to_start
 
 ## Additional user parameters
 
-The meaning of the AMRVAC parameter lists and variables in the .par file can be looked up on the AMRVAC webpage. The .par files provided are 'basic' ones that work for the problem. 
+The meaning of the AMRVAC parameter lists and variables in the .par file can be looked up on the AMRVAC webpage. The .par files provided are basic settings that work for the problem. 
 
-Additionally, a `star_list` is specified in the .par file containing variables specific for our problem. The ones relevant for computations are converted in the code to unitless quantities within the `make_dimless_vars` routine.
+Additionally, a `star_list` is specified in the .par file containing variables specific for our problem. The ones relevant for computations are converted in the code to dimensionless quantities within the `initglobaldata_usr` subroutine.
 
 | Parameter| Explanation                                                       |
 |----------|-------------------------------------------------------------------|
 | mstar    | stellar mass (solar units)                                        |
 | rstar    | stellar radius (solar units)                                      |
 | twind    | wind temperature (Kelvin)                                         |
-| bpole, etastar | polar magnetic field strength (G) or wind magnetic confinement; one of these parameters has to be specified |
+| bpole, etastar | polar magnetic field strength (G) or wind magnetic confinement; one of these parameters is to be specified |
 | rhobound | stellar boundary density (g/cm^3)                                 |
 | tstat    | time to start to compute statistical averages (sec)               |
 | Wrot     | ratio of equatorial rotational velocity to orbital (critical)  velocity |
@@ -121,7 +133,20 @@ For proper behaviour during the simulation; after each computation of $\langle X
 
 The routine is called at the **end** of the iteration (i.e. after the advection has been performed) and the w-array is thus evolved. However, the *nwextra* variables (defined in the code with `var_set_extravar()`) are never evolved and so they are still at the state before advection (i.e. previous timestep). If wished for, it is straightforward to also include here new quantities of interest. **Note** that although the routine is called each iteration, the actual values are only printed every `dtsave_dat`.
 
-## Known issues (from AMRVAC version 2.2)
+## Notice
+
+Tested with AMRVAC version 3.2, 2.2. q
+
+*Backward compatibility of version 3.x with older versions (especially < v3.x) is not the case due to internal AMRVAC code changes. Within a given main version number backward compatibility **might** be guaranteed--always consult the AMRVAC release log if notable changes occurred.*
+
+## Known issues
+
+### v3.2
+
++ same as v2.2
++ models including radiative cooling gradually experience a decreasing timestep thereby halting the simulation. This is due to the formation of gas pockets of very high Alfven speed near the star.
+
+### v2.2
 
 + using Constrained Transport for divergence B leads to strange blob developments in simulations (CT implementation excluded for now).
 + using a user specified AMR region (e.g. to resolve the magnetic equatorial plane) leads to streaks at the boundary of the refined and non-refined grid.
