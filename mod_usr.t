@@ -99,6 +99,7 @@ contains
   subroutine initglobaldata_usr
 
     use mod_mhd_phys, only: rc_fl
+    use mod_rotating_frame
     use mod_radiative_cooling ! has to be loaded in full to work with rc_fl
 
     ! Local variables
@@ -189,6 +190,8 @@ contains
     small_pressure    = small_density * small_temperature
 
     if (mhd_radiative_cooling) rc_fl%tlow = small_temperature
+
+    if (mhd_rotating_frame) omega_frame = vrot / rstar
 
     if (mype == 0 .and. .not.convert) then
       print*, '======================'
@@ -291,9 +294,14 @@ contains
       w(ir^%1ixO^S,mom(1)) = interp_vr
     enddo
 
-    ! Initial rigid body rotation
     w(ixO^S,mom(2)) = 0.0d0
-    w(ixO^S,mom(3)) = vrot * sin(x(ixO^S,2)) * rstar**2.0d0 / x(ixO^S,1)
+
+    if (mhd_rotating_frame) then
+      w(ixO^S,mom(3)) = 0.0d0
+    else
+      ! Angular momentum conserving
+      w(ixO^S,mom(3)) = vrot * sin(x(ixO^S,2)) * rstar**2.0d0 / x(ixO^S,1)
+    endif
 
     ! Setup dipole magnetic field based on Tanaka splitting or regular
     if (B0field) then
@@ -355,7 +363,12 @@ contains
       w(ixB^S,mom(1)) = min(w(ixB^S,mom(1)),  csound)
       w(ixB^S,mom(1)) = max(w(ixB^S,mom(1)), -csound)
 
-      w(ixB^S,mom(3)) = vrot * sin(x(ixB^S,2))
+      if (mhd_rotating_frame) then
+        w(ixB^S,mom(3)) = 0.0d0
+      else
+        ! Rigid body rotation of star
+        w(ixB^S,mom(3)) = vrot * sin(x(ixB^S,2))
+      endif
 
       if (B0field) then ! Tanaka field splitting
         do ir = ixBmax1,ixBmin1,-1
