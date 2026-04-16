@@ -2,12 +2,12 @@
 ! 1D CAK wind module for launching a spherically symmetric line-driven wind
 ! from the stellar surface.
 !
-! Coded up by Flo for his KU Leuven PhD thesis 2018/2022.
-!
 ! Options for wind to be specified in usr.par file:
 !   ifrc = 0  : radially streaming CAK wind
 !   ifrc = 1  : finite disk corrected CAK wind
 !   ifrc = 2  : finite disk + opacity cut-off
+!
+! Coded up by Florian Driessen: 2018-2022 (PhD), 2025.
 !==============================================================================
 module mod_usr
 
@@ -105,8 +105,8 @@ contains
     ! Local variables
     character(len=8) :: todayis
     real(dp) :: unit_ggrav, unit_lum
-    real(dp) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
-    real(dp) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol, vesc
+    real(dp) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs, mumol
+    real(dp) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, vesc
     !--------------------------------------------------------------------------
 
     mstar_cgs = mstar_sol * const_MSun
@@ -145,8 +145,8 @@ contains
     unit_mass          = unit_density * unit_length**3.0_dp
     unit_opacity       = unit_length**2.0_dp / unit_mass
 
-    unit_ggrav   = unit_density * unit_time**2.0_dp
-    unit_lum     = unit_density * unit_length**5.0_dp / unit_time**3.0_dp
+    unit_ggrav = unit_density * unit_time**2.0_dp
+    unit_lum   = unit_density * unit_length**5.0_dp / unit_time**3.0_dp
 
     rhosurf = rhosurf_cgs / unit_density
     lstar   = lstar_cgs / unit_lum
@@ -331,7 +331,7 @@ contains
 
         call hd_to_primitive(ixI^L, ixE^L, w, x)
 
-        ! Radial velocity field (constant slope extrapolation: d^vr/dr^2 = 0)
+        ! Radial velocity field (constant slope extrapolation: d^2vr/dr^2 = 0)
         do ir = ixBmax1,ixBmin1,-1
           w(ir^%1ixB^S,mom(1)) = 2.0_dp*w(ir+1^%1ixB^S,mom(1)) &
               - w(ir+2^%1ixB^S,mom(1))
@@ -382,7 +382,7 @@ contains
       integer  :: id
       real(dp) :: timecurr, timeprev
 
-      integer, save :: nupdate
+      integer,  save :: nupdate
       real(dp), save :: rhosurfav
       !------------------------------------------------------------------------
 
@@ -390,7 +390,7 @@ contains
       soundspeed(ixI^S) = sqrt(tfloor * twind)
 
       ! Adapt after three dynamical timescales (set by finite-disk CAK model)
-      if (qt > 3.0_dp * timedyn) then
+      if (qt > 3.0_dp*timedyn) then
 
         ! Get index of velocity closed to sonic velocity
         id = minloc(abs(w(ixI^S,mom(1)) - soundspeed(ixI^S)), 1)
@@ -443,7 +443,7 @@ contains
     real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variables
-    integer :: i, jx^L, hx^L
+    integer  :: i, jx^L, hx^L
     real(dp) :: vr(ixI^S), rho(ixI^S)
     real(dp) :: dvdr_up(ixO^S), dvdr_down(ixO^S), dvdr_cent(ixO^S), dvdr(ixO^S)
     real(dp) :: ge(ixO^S), gcak(ixO^S), beta_fd(ixO^S), fdfac(ixO^S), &
@@ -451,7 +451,6 @@ contains
     real(dp) :: qbar(ixO^S), q0(ixO^S), alpha(ixO^S), kappae(ixO^S)
     !--------------------------------------------------------------------------
 
-    ! Define time-centred, radial velocity from the radial momentum and density
     vr(ixI^S)  = wCT(ixI^S,mom(1)) / wCT(ixI^S,rho_)
     rho(ixI^S) = wCT(ixI^S,rho_)
 
@@ -519,7 +518,7 @@ contains
     end select
 
     ! Thomson force
-    ge(ixO^S) = kappae(ixO^S) * lstar/(4.0_dp*dpi * clight * x(ixO^S,1)**2.0_dp)
+    ge(ixO^S) = kappae(ixO^S) * lstar/(4.0_dp*dpi*clight * x(ixO^S,1)**2.0_dp)
 
     ! Sobolev optical depth for line ensemble (tau = Qbar * t_r) and CAK force
     select case (ifrc)
@@ -617,8 +616,7 @@ contains
     real(dp) :: tnormc, tnormp
     !--------------------------------------------------------------------------
 
-    ! Note: qt is just a placeholder for the 'global_time' variable
-    if (qt < tstat) RETURN
+    if (qt < tstat) return
 
     ! Current ^(n+1) and previous ^(n) timestep normalisation weigths
     tnormc = qt + dt - tstat

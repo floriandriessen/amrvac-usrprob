@@ -6,7 +6,7 @@
 ! This module relies on my developed mod_cak_force module in MPI-AMRVAC and a
 ! separate routine to read in 1D smooth CAK wind initial conditions.
 !
-! Coded up by Florian Driessen: 2018-2022 (PhD), 2025
+! Coded up by Florian Driessen: 2018-2022 (PhD), 2025.
 !==============================================================================
 module mod_usr
 

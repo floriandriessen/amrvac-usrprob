@@ -1,14 +1,14 @@
 !==============================================================================
-! Make an initial condition using a 1-D CAK wind model by interpolating it on
+! Make an initial condition using a 1D CAK wind model by interpolating it on
 ! the simulation grid. This is a modification of AMRVAC mod_oneblock module.
-! Works with 1-D, 2-D, 3-D (M)HD radiation-driven wind models.
+! Works with 1D, 2D, 3D (M)HD radiation-driven wind models.
 !
 ! NOTE: if input grid < simulation grid the outer wind will be held constant at
 !       values of outermost density and radial velocity of input wind.
 !
 ! To make AMRVAC aware of this module include a 'local.make' file with rules.
 !
-! Coded up by Flo for the KU Leuven PhD thesis 2018-2022
+! Coded up by Florian Driessen: 2018-2022 (PhD).
 !==============================================================================
 module mod_init_cakwind
 
@@ -16,15 +16,17 @@ module mod_init_cakwind
 
   implicit none
 
-  ! Global variables to be set from reading input file
-  integer               :: nrcells
-  real(dp), allocatable :: woneblock(:,:), xoneblock(:)
+  ! Number of radial cells
+  integer :: nrcells
+
+  ! Arrays holding radial grid and hydrodynamic variables
+  real(dp), allocatable :: xoneblock(:), woneblock(:,:)
 
 contains
 
 !==============================================================================
 ! Read in a relaxed 1D CAK profile stored in a .blk file that is produced
-! with the 1D CAK wind code. Assumed input format: rho, vr, gcak, fdfac.
+! with the 1D CAK wind code. Assumed input format: rho, vr, ...
 !==============================================================================
   subroutine read_oned_cakwind(filename)
 
@@ -37,13 +39,10 @@ contains
 
     ! Local variables
     integer  :: ir, unit = 94
-    !real(dp) :: tmp, tmp1
     logical  :: alive
     !--------------------------------------------------------------------------
 
-    !*************************
     ! Master does the reading
-    !*************************
     if (mype == 0) then
       inquire(file=trim(filename), exist=alive)
 
@@ -71,7 +70,7 @@ contains
       allocate(woneblock(nrcells,1:2))
 
       do ir = 1,nrcells
-        read(unit,*) xoneblock(ir), woneblock(ir,:)!, tmp, tmp1
+        read(unit,*) xoneblock(ir), woneblock(ir,:)
       enddo
 
       close(unit)
@@ -79,9 +78,7 @@ contains
 
     call MPI_BARRIER(icomm,ierrmpi)
 
-    !****************************
     ! Broadcast what mype=0 read
-    !****************************
     if (npe > 1) then
       call MPI_BCAST(nrcells,1,MPI_INTEGER,0,icomm,ierrmpi)
 
