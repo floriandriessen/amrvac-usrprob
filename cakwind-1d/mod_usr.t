@@ -12,23 +12,24 @@
 module mod_usr
 
   use mod_hd
+  use mod_kind_parameter, only: dp
 
   implicit none
 
   ! Extra input parameters
-  integer :: ifrc
-  real(8) :: mstar_sol, rstar_sol, twind_cgs, rhosurf_cgs, tstat
-  real(8) :: cak_alpha, gayley_qbar, gayley_q0, beta
+  integer  :: ifrc
+  real(dp) :: mstar_sol, rstar_sol, twind_cgs, rhosurf_cgs, tstat
+  real(dp) :: cak_alpha, gayley_qbar, gayley_q0, beta
 
   ! Dimensionless variables of relevant variables
-  real(8) :: lstar, mstar, rstar, rhosurf, twind, kappae, vinf, mdot
-  real(8) :: csound, clight, gmstar
-  logical :: use_lte_table = .false.
+  real(dp) :: lstar, mstar, rstar, rhosurf, twind, kappae, vinf, mdot
+  real(dp) :: csound, clight, gmstar
+  logical  :: use_lte_table = .false.
 
   ! Variables for adaptive surface mass density
-  logical :: use_poniatowski_bc = .false.
-  real(8) :: timedyn, gammae
-  real(8), parameter :: tfloor = 0.8d0, rho_coupling = 2.0d0
+  logical  :: use_poniatowski_bc = .false.
+  real(dp) :: timedyn, gammae
+  real(dp), parameter :: tfloor = 0.8_dp, rho_coupling = 2.0_dp
 
   ! 1-D CAK line force option from ifrc
   integer, parameter :: radstream = 0, fdisc = 1, fdisc_cutoff = 2
@@ -103,31 +104,31 @@ contains
 
     ! Local variables
     character(len=8) :: todayis
-    real(8) :: unit_ggrav, unit_lum
-    real(8) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
-    real(8) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol, vesc
+    real(dp) :: unit_ggrav, unit_lum
+    real(dp) :: lstar_cgs, mstar_cgs, rstar_cgs, vesc_cgs, mdot_cgs
+    real(dp) :: vinf_cgs, csound_cgs, logg_cgs, logge_cgs, heff_cgs, mumol, vesc
     !--------------------------------------------------------------------------
 
     mstar_cgs = mstar_sol * const_MSun
     rstar_cgs = rstar_sol * const_RSun
 
     ! Stellar structure
-    lstar_cgs  = 4.0d0*dpi * rstar_cgs**2.0d0 * const_sigma * twind_cgs**4.0d0
+    lstar_cgs  = 4.0_dp*dpi*rstar_cgs**2.0_dp * const_sigma * twind_cgs**4.0_dp
     gammae     = const_kappae * lstar_cgs &
-         / (4.0d0*dpi * const_G * mstar_cgs * const_c)
-    logg_cgs   = log10(const_G * mstar_cgs / rstar_cgs**2.0d0)
-    logge_cgs  = logg_cgs + log10(1.0d0 - gammae)
-    mumol      = (1.0d0 + 4.0d0*He_abundance) / (2.0d0 + 3.0d0*He_abundance)
+         / (4.0_dp*dpi * const_G * mstar_cgs * const_c)
+    logg_cgs   = log10(const_G * mstar_cgs / rstar_cgs**2.0_dp)
+    logge_cgs  = logg_cgs + log10(1.0_dp - gammae)
+    mumol      = (1.0_dp + 4.0_dp*He_abundance) / (2.0_dp + 3.0_dp*He_abundance)
     csound_cgs = sqrt(twind_cgs * kB_cgs / (mumol * mp_cgs))
-    heff_cgs   = csound_cgs**2.0d0 / 10.0d0**logge_cgs
+    heff_cgs   = csound_cgs**2.0_dp / 10.0_dp**logge_cgs
 
     ! Wind quantities in CAK theory
     gayley_q0 = gayley_q0 * gayley_qbar
-    vesc_cgs  = sqrt( 2.0d0 * const_G * mstar_cgs * (1.0d0 - gammae) &
+    vesc_cgs  = sqrt( 2.0_dp * const_G * mstar_cgs * (1.0_dp - gammae) &
          / rstar_cgs )
-    vinf_cgs  = vesc_cgs * sqrt(cak_alpha / (1.0d0 - cak_alpha))
-    mdot_cgs  = lstar_cgs / const_c**2.0d0 * cak_alpha / (1.0d0 - cak_alpha) &
-         * (gayley_qbar * gammae / (1.0d0 - gammae))**( (1.0d0 - cak_alpha) &
+    vinf_cgs  = vesc_cgs * sqrt(cak_alpha / (1.0_dp - cak_alpha))
+    mdot_cgs  = lstar_cgs / const_c**2.0_dp * cak_alpha / (1.0_dp - cak_alpha)&
+         * (gayley_qbar * gammae / (1.0_dp - gammae))**( (1.0_dp - cak_alpha) &
          / cak_alpha )
 
     ! Initialise CAK tables in src/tables/CAK_tables
@@ -141,11 +142,11 @@ contains
     unit_pressure      = unit_numberdensity * kB_cgs * unit_temperature
     unit_velocity      = sqrt(unit_pressure / unit_density)
     unit_time          = unit_length / unit_velocity
-    unit_mass          = unit_density * unit_length**3.0d0
-    unit_opacity       = unit_length**2.0d0 / unit_mass
+    unit_mass          = unit_density * unit_length**3.0_dp
+    unit_opacity       = unit_length**2.0_dp / unit_mass
 
-    unit_ggrav   = unit_density * unit_time**2.0d0
-    unit_lum     = unit_density * unit_length**5.0d0 / unit_time**3.0d0
+    unit_ggrav   = unit_density * unit_time**2.0_dp
+    unit_lum     = unit_density * unit_length**5.0_dp / unit_time**3.0_dp
 
     rhosurf = rhosurf_cgs / unit_density
     lstar   = lstar_cgs / unit_lum
@@ -156,10 +157,10 @@ contains
     csound  = csound_cgs / unit_velocity
     clight  = const_c / unit_velocity
     vesc    = vesc_cgs / unit_velocity
-    vinf    = vesc * sqrt(cak_alpha / (1.0d0 - cak_alpha))
+    vinf    = vesc * sqrt(cak_alpha / (1.0_dp - cak_alpha))
     kappae  = const_kappae / unit_opacity
     gmstar  = const_G * unit_ggrav * mstar
-    timedyn = rstar / (3.0d0 * vinf)
+    timedyn = rstar / (3.0_dp * vinf)
 
     if (mype == 0 .and. .not.convert) then
       call date_and_time(todayis)
@@ -201,7 +202,7 @@ contains
       print*, 'asound          = ', csound_cgs
       print*, 'eff. vesc       = ', vesc_cgs
       print*, 'CAK vinf        = ', vinf_cgs
-      print*, 'FD vinf         = ', 3.0d0 * vesc_cgs
+      print*, 'FD vinf         = ', 3.0_dp * vesc_cgs
       print*, 'use_lte_table   = ', use_lte_table
       print*, 'use Luka BC     = ', use_poniatowski_bc
       print*
@@ -212,7 +213,7 @@ contains
       print*, 'surface density        = ', rhosurf_cgs
       print*, 'analytic Mdot CAK      = ', mdot_cgs * const_years / const_MSun
       print*, '... with FD correction = ', &
-           mdot_cgs / (1.0d0 + cak_alpha)**(1.0d0/cak_alpha) &
+           mdot_cgs / (1.0_dp + cak_alpha)**(1.0_dp/cak_alpha) &
            * const_years / const_MSun
       print*
       print*, '========================================'
@@ -244,33 +245,33 @@ contains
   subroutine initial_conditions(ixI^L, ixO^L, w, x)
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixO^L
-    real(8), intent(in)    :: x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: ixI^L, ixO^L
+    real(dp), intent(in)    :: x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variables
-    real(8) :: sfac, dvdr(ixO^S), ge(ixO^S), gcak(ixO^S), tausob(ixO^S), vsurf
+    real(dp) :: sfac, dvdr(ixO^S), ge(ixO^S), gcak(ixO^S), tausob(ixO^S), vsurf
     !--------------------------------------------------------------------------
 
     ! Fix base speed at 10km/s
-    vsurf = 10.0d0 * 1e5 / unit_velocity
-    sfac  = 1.0d0 - (vsurf / vinf)**(1.0d0/beta)
+    vsurf = 10e5_dp / unit_velocity
+    sfac  = 1.0_dp - (vsurf / vinf)**(1.0_dp/beta)
 
     where (x(ixI^S,1) >= rstar)
-       w(ixI^S,mom(1)) = vinf * ( 1.0d0 - sfac * rstar / x(ixI^S,1) )**beta
+       w(ixI^S,mom(1)) = vinf * ( 1.0_dp - sfac * rstar / x(ixI^S,1) )**beta
        w(ixI^S,rho_)   = rhosurf * vsurf / w(ixI^S,mom(1)) &
-            * (rstar / x(ixI^S,1))**2.0d0
+            * (rstar / x(ixI^S,1))**2.0_dp
     endwhere
 
     call hd_to_conserved(ixI^L, ixO^L, w, x)
 
     ! Initial forces
-    ge(ixO^S) = kappae * lstar/(4.0d0*dpi * clight * x(ixO^S,1)**2.0d0)
+    ge(ixO^S) = kappae * lstar/(4.0_dp*dpi * clight * x(ixO^S,1)**2.0_dp)
 
-    dvdr(ixO^S)   = beta * vinf * sfac * rstar / x(ixO^S,1)**2.0d0 &
-         * (1.0d0 - sfac * rstar / x(ixO^S,1))**(beta - 1.0d0)
+    dvdr(ixO^S)   = beta * vinf * sfac * rstar / x(ixO^S,1)**2.0_dp &
+         * (1.0_dp - sfac * rstar / x(ixO^S,1))**(beta - 1.0_dp)
     tausob(ixO^S) = gayley_qbar * kappae * clight * w(ixO^S,rho_) / dvdr(ixO^S)
-    gcak(ixO^S)   = gayley_qbar / (1.0d0 - cak_alpha) * ge(ixO^S) &
+    gcak(ixO^S)   = gayley_qbar / (1.0_dp - cak_alpha) * ge(ixO^S) &
            / tausob(ixO^S)**cak_alpha
 
     ! Constant line-statistic parameters at start
@@ -280,7 +281,7 @@ contains
     w(ixO^S,iqbar_)  = gayley_qbar
     w(ixO^S,iq0_)    = gayley_q0
     w(ixO^S,ike_)    = kappae
-    w(ixO^S,ikcak_)  = gcak(ixO^S) * (4.0d0 * dpi * clight) / lstar
+    w(ixO^S,ikcak_)  = gcak(ixO^S) * (4.0_dp * dpi * clight) / lstar
 
   end subroutine initial_conditions
 
@@ -290,13 +291,13 @@ contains
   subroutine special_bound(qt, ixI^L, ixB^L, iB, w, x)
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixB^L, iB
-    real(8), intent(in)    :: qt, x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: ixI^L, ixB^L, iB
+    real(dp), intent(in)    :: qt, x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variable
-    integer :: ir, ixE^L
-    real(8) :: wlocal(ixI^S,1:nw), scaleheight, soundspeed(ixI^S)
+    integer  :: ir, ixE^L
+    real(dp) :: wlocal(ixI^S,1:nw), scaleheight, soundspeed(ixI^S)
     !--------------------------------------------------------------------------
 
     select case (iB)
@@ -311,18 +312,18 @@ contains
         call adaptive_surface_density(ixI^L, qt, wlocal, rhosurf, soundspeed)
 
         ! Compute barometric scale height to get hydrostatic atmosphere
-        scaleheight = soundspeed(ixBmax1+1)**2.0d0 &
-            * x(ixBmax1+1,1) / (gmstar * (1.0d0 - gammae))
+        scaleheight = soundspeed(ixBmax1+1)**2.0_dp &
+            * x(ixBmax1+1,1) / (gmstar * (1.0_dp - gammae))
 
-        w(ixB^S,rho_) = rhosurf * exp( -2.0d0*x(ixBmax1+1,1) / scaleheight &
-            * (1.0d0 - 1.0d0 / x(ixB^S,1)) )
+        w(ixB^S,rho_) = rhosurf * exp( -2.0_dp*x(ixBmax1+1,1) / scaleheight &
+            * (1.0_dp - 1.0_dp / x(ixB^S,1)) )
 
         call hd_to_primitive(ixI^L, ixE^L, w, x)
 
         ! Radial velocity field (from continuity)
         do ir = ixBmax1,ixBmin1,-1
-          w(ir,mom(1)) = w(ir+1,mom(1)) * w(ir+1,rho_) * x(ir+1,1)**2.0d0 &
-              / (w(ir,rho_) * x(ir,1)**2.0d0)
+          w(ir,mom(1)) = w(ir+1,mom(1)) * w(ir+1,rho_) * x(ir+1,1)**2.0_dp &
+              / (w(ir,rho_) * x(ir,1)**2.0_dp)
         enddo
       else
         ! Standard conditions
@@ -332,7 +333,7 @@ contains
 
         ! Radial velocity field (constant slope extrapolation: d^vr/dr^2 = 0)
         do ir = ixBmax1,ixBmin1,-1
-          w(ir^%1ixB^S,mom(1)) = 2.0d0*w(ir+1^%1ixB^S,mom(1)) &
+          w(ir^%1ixB^S,mom(1)) = 2.0_dp*w(ir+1^%1ixB^S,mom(1)) &
               - w(ir+2^%1ixB^S,mom(1))
         enddo
       endif
@@ -349,7 +350,7 @@ contains
       ixEmin1 = ixBmin1 - 2
 
       ! Constant extrapolation of all
-      w(ixB^S,rho_) = w(ixBmin1-1,rho_) * (x(ixBmin1-1,1) / x(ixB^S,1))**2.0d0
+      w(ixB^S,rho_) = w(ixBmin1-1,rho_) * (x(ixBmin1-1,1) / x(ixB^S,1))**2.0_dp
 
       call hd_to_primitive(ixI^L, ixE^L, w, x)
 
@@ -372,24 +373,24 @@ contains
     subroutine adaptive_surface_density(ixI^L, qt, w, rhobound, soundspeed)
 
       ! Subroutine arguments
-      integer, intent(in)    :: ixI^L
-      real(8), intent(in)    :: qt, w(ixI^S,1:nw)
-      real(8), intent(inout) :: rhobound
-      real(8), intent(out)   :: soundspeed(ixI^S)
+      integer,  intent(in)    :: ixI^L
+      real(dp), intent(in)    :: qt, w(ixI^S,1:nw)
+      real(dp), intent(inout) :: rhobound
+      real(dp), intent(out)   :: soundspeed(ixI^S)
 
       ! Local variables
-      integer :: id
-      real(8) :: timecurr, timeprev
+      integer  :: id
+      real(dp) :: timecurr, timeprev
 
       integer, save :: nupdate
-      real(8), save :: rhosurfav
+      real(dp), save :: rhosurfav
       !------------------------------------------------------------------------
 
       ! Dimensionless isothermal sound speed
       soundspeed(ixI^S) = sqrt(tfloor * twind)
 
       ! Adapt after three dynamical timescales (set by finite-disk CAK model)
-      if (qt > 3.0d0 * timedyn) then
+      if (qt > 3.0_dp * timedyn) then
 
         ! Get index of velocity closed to sonic velocity
         id = minloc(abs(w(ixI^S,mom(1)) - soundspeed(ixI^S)), 1)
@@ -402,7 +403,7 @@ contains
         rhosurfav = rhosurfav / timecurr
 
         if (qt > nupdate * timedyn) then
-          if ( abs(rhobound/(rho_coupling * rhosurfav) - 1) >= 0.2d0) then
+          if ( abs(rhobound/(rho_coupling * rhosurfav) - 1) >= 0.2_dp) then
             ! print*, "updated boundary density:", &
             !      log10(rhobound * unit_density), &
             !      " to:", log10(rho_coupling * rhosurfav * unit_density)
@@ -413,7 +414,7 @@ contains
         endif
 
       else
-        rhosurfav = 0.0d0
+        rhosurfav = 0.0_dp
         nupdate   = 8
 
         if (it < 10) then
@@ -436,18 +437,18 @@ contains
     use mod_cak_opacity, only: set_cak_opacity
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixO^L, iw^LIM
-    real(8), intent(in)    :: qdt, qtC, qt
-    real(8), intent(in)    :: wCT(ixI^S,1:nw), x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: ixI^L, ixO^L, iw^LIM
+    real(dp), intent(in)    :: qdt, qtC, qt
+    real(dp), intent(in)    :: wCT(ixI^S,1:nw), x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variables
     integer :: i, jx^L, hx^L
-    real(8) :: vr(ixI^S), rho(ixI^S)
-    real(8) :: dvdr_up(ixO^S), dvdr_down(ixO^S), dvdr_cent(ixO^S), dvdr(ixO^S)
-    real(8) :: ge(ixO^S), gcak(ixO^S), beta_fd(ixO^S), fdfac(ixO^S), &
+    real(dp) :: vr(ixI^S), rho(ixI^S)
+    real(dp) :: dvdr_up(ixO^S), dvdr_down(ixO^S), dvdr_cent(ixO^S), dvdr(ixO^S)
+    real(dp) :: ge(ixO^S), gcak(ixO^S), beta_fd(ixO^S), fdfac(ixO^S), &
          tausob(ixO^S)
-    real(8) :: qbar(ixO^S), q0(ixO^S), alpha(ixO^S), kappae(ixO^S)
+    real(dp) :: qbar(ixO^S), q0(ixO^S), alpha(ixO^S), kappae(ixO^S)
     !--------------------------------------------------------------------------
 
     ! Define time-centred, radial velocity from the radial momentum and density
@@ -468,7 +469,7 @@ contains
          / ((x(ixO^S,1) - x(hx^S,1)) * (x(jx^S,1) - x(hx^S,1)))
 
     ! Central difference
-    dvdr_cent(ixO^S) = (x(jx^S,1) + x(hx^S,1) - 2.0d0*x(ixO^S,1)) * vr(ixO^S) &
+    dvdr_cent(ixO^S) = (x(jx^S,1) + x(hx^S,1) - 2.0_dp*x(ixO^S,1)) * vr(ixO^S) &
          / ((x(ixO^S,1) - x(hx^S,1)) * (x(jx^S,1) - x(ixO^S,1)))
 
     ! Total gradient (in CAK this has to be >0, otherwise stagnant flow)
@@ -493,47 +494,47 @@ contains
     endif
 
     ! Finite disk factor parameterisation (Owocki & Puls 1996)
-    beta_fd(ixO^S) = (1.0d0 - vr(ixO^S) / (x(ixO^S,1) * dvdr(ixO^S))) &
-         * (rstar / x(ixO^S,1))**2.0d0
+    beta_fd(ixO^S) = (1.0_dp - vr(ixO^S) / (x(ixO^S,1) * dvdr(ixO^S))) &
+         * (rstar / x(ixO^S,1))**2.0_dp
 
     ! Check the finite disk array and determine finite disk factor
     select case (ifrc)
     case(radstream)
-      fdfac(ixO^S) = 1.0d0
+      fdfac(ixO^S) = 1.0_dp
 
     case(fdisc, fdisc_cutoff)
-      where (beta_fd(ixO^S) >= 1.0d0)
-        fdfac(ixO^S) = 1.0d0 / (1.0d0 + alpha(ixO^S))
-      elsewhere (beta_fd(ixO^S) < -1.0d10)
+      where (beta_fd(ixO^S) >= 1.0_dp)
+        fdfac(ixO^S) = 1.0_dp / (1.0_dp + alpha(ixO^S))
+      elsewhere (beta_fd(ixO^S) < -1.0e10_dp)
         fdfac(ixO^S) = abs(beta_fd(ixO^S))**alpha(ixO^S) &
-             / (1.0d0 + alpha(ixO^S))
-      elsewhere (abs(beta_fd(ixO^S)) > 1.0d-3)
+             / (1.0_dp + alpha(ixO^S))
+      elsewhere (abs(beta_fd(ixO^S)) > 1.0e-3_dp)
         fdfac(ixO^S) = &
-             (1.0d0 - (1.0d0 - beta_fd(ixO^S))**(1.0d0 + alpha(ixO^S))) &
-             / (beta_fd(ixO^S) * (1.0d0 + alpha(ixO^S)))
+             (1.0_dp - (1.0_dp - beta_fd(ixO^S))**(1.0_dp + alpha(ixO^S))) &
+             / (beta_fd(ixO^S) * (1.0_dp + alpha(ixO^S)))
       elsewhere
-        fdfac(ixO^S) = 1.0d0 - 0.5d0*alpha(ixO^S) * beta_fd(ixO^S) &
-             * (1.0d0 + (1.0d0 - alpha(ixO^S))/3.0d0 * beta_fd(ixO^S))
+        fdfac(ixO^S) = 1.0_dp - 0.5_dp*alpha(ixO^S) * beta_fd(ixO^S) &
+             * (1.0_dp + (1.0_dp - alpha(ixO^S))/3.0_dp * beta_fd(ixO^S))
       endwhere
     end select
 
     ! Thomson force
-    ge(ixO^S) = kappae(ixO^S) * lstar/(4.0d0*dpi * clight * x(ixO^S,1)**2.0d0)
+    ge(ixO^S) = kappae(ixO^S) * lstar/(4.0_dp*dpi * clight * x(ixO^S,1)**2.0_dp)
 
     ! Sobolev optical depth for line ensemble (tau = Qbar * t_r) and CAK force
     select case (ifrc)
     case(radstream, fdisc)
       tausob(ixO^S) = qbar(ixO^S) * kappae(ixO^S) * clight * rho(ixO^S) &
            / dvdr(ixO^S)
-      gcak(ixO^S) = qbar(ixO^S)/(1.0d0 - alpha(ixO^S)) * ge(ixO^S) &
+      gcak(ixO^S) = qbar(ixO^S)/(1.0_dp - alpha(ixO^S)) * ge(ixO^S) &
            / tausob(ixO^S)**alpha(ixO^S)
 
     case(fdisc_cutoff)
       tausob(ixO^S) = q0(ixO^S) * kappae(ixO^S) * clight * rho(ixO^S) &
            / dvdr(ixO^S)
       gcak(ixO^S) = qbar(ixO^S) * ge(ixO^S) &
-           * ( (1.0d0 + tausob(ixO^S))**(1.0d0 - alpha(ixO^S)) - 1.0d0 ) &
-           / ( (1.0d0 - alpha(ixO^S)) * tausob(ixO^S) )
+           * ( (1.0_dp + tausob(ixO^S))**(1.0_dp - alpha(ixO^S)) - 1.0_dp ) &
+           / ( (1.0_dp - alpha(ixO^S)) * tausob(ixO^S) )
 
     case default
       call mpistop("usr_source: Error in wind option. Take a valid ifrc=0,1,2")
@@ -549,7 +550,7 @@ contains
     w(ixO^S,iqbar_)  = qbar(ixO^S)
     w(ixO^S,iq0_)    = q0(ixO^S)
     w(ixO^S,ike_)    = kappae(ixO^S)
-    w(ixO^S,ikcak_)  = gcak(ixO^S) * (4.0d0*dpi * clight) / lstar
+    w(ixO^S,ikcak_)  = gcak(ixO^S) * (4.0_dp*dpi * clight) / lstar
 
     ! Update conservative vars: w = w + qdt*gsource
     w(ixO^S,mom(1)) = w(ixO^S,mom(1)) &
@@ -563,13 +564,13 @@ contains
   subroutine special_dt(w, ixI^L, ixO^L, dtnew, dx^D, x)
 
     ! Subroutine arguments
-    integer, intent(in)    :: ixI^L, ixO^L
-    real(8), intent(in)    :: dx^D, x(ixI^S,1:ndim)
-    real(8), intent(in)    :: w(ixI^S,1:nw)
-    real(8), intent(inout) :: dtnew
+    integer,  intent(in)    :: ixI^L, ixO^L
+    real(dp), intent(in)    :: dx^D, x(ixI^S,1:ndim)
+    real(dp), intent(in)    :: w(ixI^S,1:nw)
+    real(dp), intent(inout) :: dtnew
 
     ! Local variables
-    real(8) :: tmp(ixO^S), dt_cak
+    real(dp) :: tmp(ixO^S), dt_cak
     !--------------------------------------------------------------------------
 
     ! Get dt from line force that is saved in the w-array in nwextra slot
@@ -586,16 +587,16 @@ contains
   subroutine stellar_gravity(ixI^L, ixO^L, wCT, x, gravity_field)
 
     ! Subroutine arguments
-    integer, intent(in)  :: ixI^L, ixO^L
-    real(8), intent(in)  :: x(ixI^S,1:ndim)
-    real(8), intent(in)  :: wCT(ixI^S,1:nw)
-    real(8), intent(out) :: gravity_field(ixI^S,ndim)
+    integer,  intent(in)  :: ixI^L, ixO^L
+    real(dp), intent(in)  :: x(ixI^S,1:ndim)
+    real(dp), intent(in)  :: wCT(ixI^S,1:nw)
+    real(dp), intent(out) :: gravity_field(ixI^S,ndim)
     !--------------------------------------------------------------------------
 
-    gravity_field(ixI^S,:) = 0.0d0
+    gravity_field(ixI^S,:) = 0.0_dp
 
     ! Only in radial direction
-    gravity_field(ixO^S,1) = -gmstar / x(ixO^S,1)**2.0d0
+    gravity_field(ixO^S,1) = -gmstar / x(ixO^S,1)**2.0_dp
 
   end subroutine stellar_gravity
 
@@ -608,12 +609,12 @@ contains
   subroutine compute_stats(igrid, level, ixI^L, ixO^L, qt, w, x)
 
     ! Subroutine arguments
-    integer,  intent(in)   :: igrid, level, ixI^L, ixO^L
-    real(8), intent(in)    :: qt, x(ixI^S,1:ndim)
-    real(8), intent(inout) :: w(ixI^S,1:nw)
+    integer,  intent(in)    :: igrid, level, ixI^L, ixO^L
+    real(dp), intent(in)    :: qt, x(ixI^S,1:ndim)
+    real(dp), intent(inout) :: w(ixI^S,1:nw)
 
     ! Local variables
-    real(8) :: tnormc, tnormp
+    real(dp) :: tnormc, tnormp
     !--------------------------------------------------------------------------
 
     ! Note: qt is just a placeholder for the 'global_time' variable
