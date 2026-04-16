@@ -1,0 +1,96 @@
+!==============================================================================
+! Project : 2.5D magnetic CAK wind with radiative cooling
+!
+! Aim     : start from a 1D relaxed CAK wind to study wind-magnetosphere
+!           interaction in fast rotating star (ud-Doula et al. 2008, MNRAS 385)
+!
+! Config  : setup.pl -d=2 -v=3
+!==============================================================================
+
+&filelist
+  base_filename = 'out/ms'
+/
+
+&savelist
+  itsave(1,1) = 0
+  ditsave_log = 1000
+  itsave(1,2) = 0
+  dtsave_dat  = 2.5e-2
+/
+
+&stoplist
+  dtmin    = 1.0e-10
+  time_max = 1.5
+/
+
+&methodlist
+  time_stepper = 'twostep'
+  flux_scheme  = 'hllc'
+  limiter      = 'vanleer'
+  check_small_values  = .false.
+  fix_small_values    = .true.
+  small_pressure      = 1.0
+  small_density       = 1.0
+  small_values_method = 'replace'
+/
+
+&boundlist
+  ! rho, mom1, mom2, mom3, e, b1, b2, b3
+  typeboundary_min1 = 8*'special'
+  typeboundary_max1 = 8*'cont'
+  typeboundary_min2 = 'symm','symm','asymm','asymm','symm','symm','asymm','asymm'
+  typeboundary_max2 = 'symm','symm','asymm','asymm','symm','symm','asymm','asymm'
+/
+
+&meshlist
+  domain_nx1 = 256
+  domain_nx2 = 128
+  block_nx1  = 8
+  block_nx2  = 8
+  xprobmin1  = 1.0
+  xprobmax1  = 10.0
+  xprobmin2  = 0.0
+  xprobmax2  = 0.5
+  stretch_dim(1) = 'uni'
+  qstretch_baselevel(1) = 1.02
+/
+
+&paramlist
+  courantpar = 0.3
+/
+
+&mhd_list
+  mhd_gravity = .true.
+  mhd_energy  = .true.
+  mhd_gamma   = 1.666667
+  typedivbfix = 'powell'
+  B0field     = .false.
+  mhd_radiative_cooling = .true.  
+  mhd_cak_force = .true.
+/
+
+&rc_list
+  coolcurve  = 'SPEX'
+  coolmethod = 'exact'
+  ncool      = 4000
+  Tfix       = .true.
+/ 
+
+&cak_list
+  cak_alpha    = 0.65
+  gayley_qbar  = 2000.0
+  cak_1d_force = .true.
+  cak_1d_opt   = 1
+  cak_vector_force = .false.
+/
+
+&star_list
+  cakfile      = 'relaxed-CAK-winds/ic-zetapup-30rs.blk'
+  mstar_sol    = 50.0
+  rstar_sol    = 20.0
+  twind_cgs    = 4e4
+  etastar      = 10.0
+  rhosurf_cgs  = 2e-11
+  timestat_cgs = 2e5
+  Wrot         = 0.01
+/
